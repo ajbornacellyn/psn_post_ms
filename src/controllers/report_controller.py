@@ -57,7 +57,14 @@ def get_reports_from_comment(comment_id):
 def delete_report_post(post_id, report_id):
     try:
         post = Post.objects.get(id=ObjectId(post_id))
-        post.update(pull__report__id=Report(_id = ObjectId(report_id)))
+        postReportList = post.report
+        for report in postReportList:
+            if report._id == ObjectId(report_id):
+                postReportList.remove(report)
+                post.save()
+                return jsonify({'message': 'Report deleted successfully'}), 201
+            
+        return jsonify({'message': 'Report not found'}), 201
     
     except Exception as e:
         return jsonify({'error': str(e)})
@@ -66,9 +73,54 @@ def delete_report_post(post_id, report_id):
 def delete_report_comment(comment_id, report_id):
     try:
         comment = Comment.objects.get(id=ObjectId(comment_id))
-        comment.update(pull__report__id=Report(_id = ObjectId(report_id)))
+        commentReportList = comment.report
+        for report in commentReportList:
+            if report._id == ObjectId(report_id):
+                commentReportList.remove(report)
+                comment.save()
+                return jsonify({'message': 'Report deleted successfully'}), 201
+            
+        return jsonify({'message': 'Report not found'}), 201
     
     except Exception as e:
         return jsonify({'error': str(e)})
-    
 
+
+# update pendiente
+@report_bp.route('updateReportPost/<post_id>/<report_id>', methods=['PUT'])
+def update_report_post(post_id, report_id):
+    try:
+        post = Post.objects.get(id=ObjectId(post_id))
+        postReportList = post.report
+        for report in postReportList:
+            if report._id == ObjectId(report_id):
+                report.owner_id = request.json['owner_id']
+                report.infraction = request.json['infraction']
+                report.description = request.json['description']
+                #report.updateDate = db.DateTimeField(default=datetime.now) revisar por qué no deja cambiar la fecha
+                post.save()
+                return jsonify({'message': 'Report updated successfully'}), 201
+            
+        return jsonify({'message': 'Report not found'}), 201
+    
+    except Exception as e:
+        return jsonify({'error': str(e)})    
+
+@report_bp.route('updateReportComment/<comment_id>/<report_id>', methods=['PUT'])
+def update_report_comment(comment_id, report_id):
+    try:
+        comment = Comment.objects.get(id=ObjectId(comment_id))
+        commentReportList = comment.report
+        for report in commentReportList:
+            if report._id == ObjectId(report_id):
+                report.owner_id = request.json['owner_id']
+                report.infraction = request.json['infraction']
+                report.description = request.json['description']
+                #report.updateDate = db.DateTimeField(default=datetime.now)
+                comment.save()
+                return jsonify({'message': 'Report updated successfully'}), 201
+            
+        return jsonify({'message': 'Report not found'}), 201
+    
+    except Exception as e:
+        return jsonify({'error': str(e)})

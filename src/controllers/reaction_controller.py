@@ -59,11 +59,13 @@ def get_reactions_from_comment(comment_id):
 def delete_reaction_post(post_id, reaction_id):
     try:
         post = Post.objects.get(id=ObjectId(post_id))
-        post.update(pull__reaction__=Reaction(_id = ObjectId(reaction_id)))
-        post.save()
-
-        return jsonify({'message': 'Reaction deleted successfully'}), 201
-    
+        reactionList =post.reaction
+        for reaction in reactionList:
+            if reaction._id == ObjectId(reaction_id):
+                reactionList.remove(reaction)
+                post.save()
+                return jsonify({'message': 'Reaction deleted successfully'}), 201
+        return jsonify({'message': 'Reaction not found'}), 201    
     except Exception as e:
         return jsonify({'error': str(e)})
     
@@ -71,11 +73,14 @@ def delete_reaction_post(post_id, reaction_id):
 def delete_reaction_comment(comment_id, reaction_id):
     try:
         comment = Comment.objects.get(id=ObjectId(comment_id))
-        comment.update(pull__reaction__=Reaction(_id = ObjectId(reaction_id)))
-        comment.save()
-
-        return jsonify({'message': 'Reaction deleted successfully'}), 201
-    
+        reactionList =comment.reaction
+        for reaction in reactionList:
+            if reaction._id == ObjectId(reaction_id):
+                reactionList.remove(reaction)
+                comment.save()
+                print("reaction deleted")
+                return jsonify({'message': 'Reaction deleted successfully'}), 201
+        return jsonify({'message': 'Reaction not found'}), 201
     except Exception as e:
         return jsonify({'error': str(e)})
 
@@ -84,9 +89,14 @@ def delete_reaction_comment(comment_id, reaction_id):
 def update_reaction_comment(comment_id, reaction_id):
     try:
         comment = Comment.objects.get(id=ObjectId(comment_id))
-        comment.update(pull__reaction__=Reaction(_id = ObjectId(reaction_id)))
-        comment.save()
-        return jsonify({'message': 'Reaction updated successfully'}), 201
+        reactionCommentList = comment.reaction
+        for reaction in reactionCommentList:
+            if reaction._id == ObjectId(reaction_id):
+                reaction.type = request.json['type']
+                reaction.updateDate = db.DateTimeField(default=datetime.now)
+                comment.save()
+                return jsonify({'message': 'Reaction updated successfully'}), 201
+        return jsonify({'message': 'Reaction not found successfully'}), 201
     
     except Exception as e:
         return jsonify({'error': str(e)})
@@ -95,9 +105,16 @@ def update_reaction_comment(comment_id, reaction_id):
 def update_reaction_post(post_id, reaction_id):
     try:
         post = Post.objects.get(id=ObjectId(post_id))
-        post.update(pull__reaction__=Reaction(_id = ObjectId(reaction_id)))
-        post.save()
-        return jsonify({'message': 'Reaction updated successfully'}), 201
+        reactionPostList = post.reaction
+        for reaction in reactionPostList:
+            if reaction._id == ObjectId(reaction_id):
+                reaction.type = request.json['type']
+                reaction.updateDate = db.DateTimeField(default=datetime.now)
+                post.save()
+                return jsonify({'message': 'Reaction updated successfully'}), 201
+
+        return jsonify({'message': 'Reaction not found '}), 201
     
     except Exception as e:
         return jsonify({'error': str(e)})
+    
