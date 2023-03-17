@@ -1,0 +1,9 @@
+version: '3.7'
+
+services:
+  psn-post-ms:
+    image: psn-post-ms
+    env_file:
+      - .env
+    ports:
+      - "4000:4000"
