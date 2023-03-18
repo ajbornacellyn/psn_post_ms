@@ -30,8 +30,8 @@ def add_post():
 @posts_bp.route('/', methods=['GET'])
 def get_posts():
     try:
-        posts = Post.objects().to_json()
-        response = posts
+        posts = Post.objects()
+        response = {posts}
         return Response(response, mimetype='application/json')
 
     except Exception as e:
