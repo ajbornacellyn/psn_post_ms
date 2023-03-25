@@ -5,13 +5,11 @@ from flask import jsonify
 
 reaction_bp = Blueprint('reaction', __name__, url_prefix='/reaction')
 
-@reaction_bp.route('addReactionToPost/<post_id>', methods=['POST'])
-def add_reaction_to_post(post_id):
+@reaction_bp.route('/', methods=['POST'])
+def add_reaction_to_post():
     try:
-        post = Post.objects.get(id=ObjectId(post_id))
-        reaction = Reaction(**request.json)
-        post.reaction.append(reaction)
-        post.save()
+        react = Reaction(**request.json)
+        react.save()
         return jsonify({'message': 'Reaction added successfully'}), 201
     
     except Exception as e:

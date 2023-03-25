@@ -5,27 +5,6 @@ from mongoengine import fields
 
 db = MongoEngine()
 
-class Report(db.EmbeddedDocument):
-    _id = fields.ObjectIdField(primary_key=True, default = fields.ObjectId)
-    owner_id = db.IntField()
-    cretedDate = db.DateTimeField(default=datetime.now)
-    updateDate = db.DateTimeField(default=datetime.now)
-    infraction = db.StringField()
-    description = db.StringField()
-
-class ContentElement(db.EmbeddedDocument):
-    _id = fields.ObjectIdField(primary_key=True, default = fields.ObjectId)
-    description = db.StringField()
-    mediaLocator = db.StringField()
-    mediaType = db.StringField()
-
-
-class Reaction(db.EmbeddedDocument):
-    _id = fields.ObjectIdField(primary_key=True, default = fields.ObjectId)
-    owner_id = db.IntField()
-    type = db.StringField()
-    createdDate = db.DateTimeField(default=datetime.now)
-    updatedDate = db.DateTimeField(default=datetime.now)
 
 
     
@@ -36,10 +15,10 @@ class Post(db.Document):
     ownerId = db.IntField(required=True)
     location = db.StringField(default=None)
     description = db.StringField(required=True)
-    contentElement = db.ListField(db.EmbeddedDocumentField(ContentElement))
-    reaction = db.ListField(db.EmbeddedDocumentField(Reaction))
-    report = db.ListField(db.EmbeddedDocumentField(Report))
     comment = db.ListField(fields.ReferenceField('Comment'), default=None, reverse_delete_rule=CASCADE)
+    reaction = db.ListField(fields.ReferenceField('Reaction'), default=None, reverse_delete_rule=CASCADE)
+    report = db.ListField(fields.ReferenceField('Report'), default=None, reverse_delete_rule=CASCADE)
+    contentElement = db.ListField(fields.ReferenceField('ContentElement'), default=None, reverse_delete_rule=CASCADE)
 
 class Comment(db.Document):
     postId = fields.ReferenceField('Post', reverse_delete_rule=CASCADE, required=True)
@@ -47,14 +26,39 @@ class Comment(db.Document):
     createdDate = db.DateTimeField(default=datetime.now)
     updatedDate= db.DateTimeField(default=datetime.now)
     description = db.StringField()
-    reaction = db.ListField(db.EmbeddedDocumentField(Reaction))
-    report = db.ListField(db.EmbeddedDocumentField(Report))
-    contentElement = db.ListField(db.EmbeddedDocumentField(ContentElement))
+    reaction = db.ListField(fields.ReferenceField('Reaction'), default=None, reverse_delete_rule=CASCADE)
+    report = db.ListField(fields.ReferenceField('Report'), default=None, reverse_delete_rule=CASCADE)
+    contentElement = db.ListField(fields.ReferenceField('ContentElement'), default=None, reverse_delete_rule=CASCADE)
 
 
 
+class Report(db.Document):
+    _id = fields.ObjectIdField(primary_key=True, default = fields.ObjectId)
+    postId = fields.ReferenceField('Post', reverse_delete_rule=CASCADE, required=False)
+    commentId = fields.ReferenceField('Comment', reverse_delete_rule=CASCADE, required=False)
+    owner_id = db.IntField(required=True)
+    cretedDate = db.DateTimeField(default=datetime.now, required=True)
+    updateDate = db.DateTimeField(default=datetime.now, required=True)
+    infraction = db.StringField()
+    description = db.StringField()
+
+class ContentElement(db.Document):
+    _id = fields.ObjectIdField(primary_key=True, default = fields.ObjectId)
+    postId = fields.ReferenceField('Post', reverse_delete_rule=CASCADE, required=False)
+    commentId = fields.ReferenceField('Comment', reverse_delete_rule=CASCADE, required=False)
+    description = db.StringField()
+    mediaLocator = db.StringField()
+    mediaType = db.StringField()
 
 
+class Reaction(db.Document):
+    _id = fields.ObjectIdField(primary_key=True, default = fields.ObjectId)
+    postId = fields.ReferenceField('Post', reverse_delete_rule=CASCADE, required=False)
+    commentId = fields.ReferenceField('Comment', reverse_delete_rule=CASCADE, required=False)
+    owner_id = db.IntField()
+    type = db.StringField()
+    createdDate = db.DateTimeField(default=datetime.now)
+    updatedDate = db.DateTimeField(default=datetime.now)
 
 
 

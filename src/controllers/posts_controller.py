@@ -3,7 +3,7 @@ from pydantic import ValidationError
 from models import *
 from bson  import  ObjectId, json_util
 from mongoengine.errors import DoesNotExist
-
+from controllers.pipelines import getPostPipeline
 
 
 posts_bp = Blueprint('posts', __name__, url_prefix='/posts')
@@ -14,8 +14,8 @@ def add_post():
         post_data = request.get_json()
         if not post_data:
             return jsonify({'error': 'No data provided'}), 400
-        
         post = Post(**post_data)
+        post.id
         post.save()
         
         return jsonify({'message': 'Post added successfully'}), 201
@@ -29,13 +29,11 @@ def add_post():
 
 @posts_bp.route('/', methods=['GET'])
 def get_posts():
-    try:
-        posts = Post.objects()
-        response = posts.to_json()
+        
+        pipeline = getPostPipeline()
+        result = Post.objects.aggregate(*pipeline)
+        response = json_util.dumps(result)
         return Response(response, mimetype='application/json')
-
-    except Exception as e:
-        return jsonify({'error': 'Server error', 'message': str(e)}), 500
 
 
 @posts_bp.route('/<post_id>', methods=['GET'])

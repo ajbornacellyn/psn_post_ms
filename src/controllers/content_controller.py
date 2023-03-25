@@ -7,26 +7,21 @@ from flask import jsonify
 contentElement_bp = Blueprint('contentElement', __name__, url_prefix='/contentElement')
 
 
-@contentElement_bp.route('/addContentToPost/<post_id>', methods=['POST'])
-def add_contntElement_to_post(post_id):
+@contentElement_bp.route('/addContentToPost', methods=['POST'])
+def add_contentElement_to_post():
     try:
-        post = Post.objects.get(id=ObjectId(post_id))
-        contentElement = ContentElement(**request.json)
-        post.contentElement.append(contentElement)
-        post.save()
-        return jsonify({'message': 'ContentElement added successfully'}), 201
-    
+        content=ContentElement(**request.json)
+        content.save()
+        return jsonify({'message': 'ContentElement added successfully'}), 201    
     except Exception as e:
         return jsonify({'error': str(e)})    
     
 
-@contentElement_bp.route('/addContentToComment/<comment_id>', methods=['POST'])
-def add_contntElement_to_comment(comment_id):
+@contentElement_bp.route('/addContentToComment', methods=['POST'])
+def add_contentElement_to_comment():
     try:
-        comment = Comment.objects.get(id=ObjectId(comment_id))
-        contentElement = ContentElement(**request.json)
-        comment.contentElement.append(contentElement)
-        comment.save()
+        content = ContentElement(**request.json)
+        content.save()
         return jsonify({'message': 'ContentElement added successfully'}), 201
     
     except Exception as e:
@@ -35,9 +30,9 @@ def add_contntElement_to_comment(comment_id):
 @contentElement_bp.route('getContentPost/<post_id>', methods=['GET'])
 def get_contentElements(post_id):
     try:
-        post = Post.objects.get(id=ObjectId(post_id))
-        contentElements = post.contentElement
-        response = [contentElement.to_json() for contentElement in contentElements]
+
+        contents = ContentElement.objects.get(id=ObjectId(post_id))
+        response = contents.to_json()
         return Response(response, 201, mimetype='application/json')
     
     except Exception as e:
@@ -57,7 +52,7 @@ def get_contentElements_from_comment(comment_id):
 
 
 @contentElement_bp.route('deleteContentPost/<post_id>/<contentElement_id>', methods=['DELETE'])
-def delete_contentElement_post(post_id, contentElement_id):
+def delete_contentElementt_post(post_id, contentElement_id):
     try:
         post = Post.objects.get(id=ObjectId(post_id))
         post.update(pull__contentElement__=ContentElement(_id = ObjectId(contentElement_id)))
