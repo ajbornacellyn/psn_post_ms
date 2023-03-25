@@ -1,5 +1,8 @@
 
 
+from bson import ObjectId
+
+
 def getPostPipeline():
     pipeline = [
     {
@@ -56,4 +59,77 @@ def getPostPipeline():
     }
 ]
 
+    return pipeline
+
+def getCommentsPostPipeline(post_id):
+    pipeline = [
+        {
+            "$match": {
+                "postId": ObjectId(post_id)
+            }
+        },
+        {
+            "$addFields": {
+                "postId": { "$toString": "$postId" },
+                "_id": { "$toString": "$_id" }
+            }
+        },
+        {
+            "$project": {
+                "_id": 1,
+                "ownerId": 1,
+                "description": 1,
+                "createdDate": 1,
+                "updatedDate": 1
+            }
+        }
+    ]
+    return pipeline
+
+def getCommentPipeline(commentId):
+    pipeline = [
+        {
+            "$match": {
+                "_id": ObjectId(commentId)
+            }
+        },
+        {
+            "$addFields": {
+                "postId": { "$toString": "$postId" },
+                "_id": { "$toString": "$_id" }
+            }
+        },
+        {
+            "$project": {
+                "postId": 1,
+                "ownerId": 1,
+                "createdDate": 1,
+                "updatedDate": 1,
+                "infraction": 1,
+                "description": 1
+            }
+        }
+    ]
+    return pipeline
+
+def getReactionPipeline():
+    pipeline = [
+        {
+            "$addFields": {
+                "postId": { "$toString": "$postId" },
+                "commentId": { "$toString": "$commentId" },
+                "_id": { "$toString": "$_id" }
+            }
+        },
+        {
+            "$project": {
+                "postId": 1,
+                "commentId": 1,
+                "ownerId": 1,
+                "type": 1,
+                "createdDate": 1,
+                "updatedDate": 1,
+            }
+        }
+    ]
     return pipeline

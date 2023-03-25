@@ -1,118 +1,75 @@
 from flask import Response, Blueprint, request
 from models import *
-from bson  import ObjectId
+from bson  import ObjectId, json_util
 from flask import jsonify
+from controllers.pipelines import getReactionPipeline
 
 reaction_bp = Blueprint('reaction', __name__, url_prefix='/reaction')
 
-@reaction_bp.route('/', methods=['POST'])
+@reaction_bp.route('reactToPost', methods=['POST'])
 def add_reaction_to_post():
     try:
-        react = Reaction(**request.json)
-        react.save()
-        return jsonify({'message': 'Reaction added successfully'}), 201
-    
-    except Exception as e:
-        return jsonify({'error': str(e)})
-    
-@reaction_bp.route('addReactionToComment/<comment_id>', methods=['POST'])
-def add_reaction_to_comment(comment_id):
-    try:
-        comment = Comment.objects.get(id=ObjectId(comment_id))
+        post_id = request.json['postId']
+        post = Post.objects.get(id=ObjectId(post_id))
+        if not post:
+            return jsonify({'message': 'post not found'})
         reaction = Reaction(**request.json)
-        comment.reaction.append(reaction)
-        comment.save()
+        reaction.save()
         return jsonify({'message': 'Reaction added successfully'}), 201
     
     except Exception as e:
+        return jsonify({'message': str(e)})
+    
+@reaction_bp.route('reactToComment', methods=['POST'])
+def add_reaction_to_comment():
+    try:
+        comment_id = request.json['commentId']
+        comment = Comment.objects.get(id=ObjectId(comment_id))
+        if not comment:
+            return jsonify({'message': 'comment not found'})
+        reaction = Reaction(**request.json)
+        reaction.save()
+        return jsonify({'message': 'Reaction added successfully'})
+    
+    except Exception as e:
         return jsonify({'error': str(e)})
     
-@reaction_bp.route('getReactionPost/<post_id>', methods=['GET'])
-def get_reactions(post_id):
+@reaction_bp.route('/', methods=['GET'])
+def get_reactions():
     try:
-        post = Post.objects.get(id=ObjectId(post_id))
-        reactions = post.reaction
-        response = [reaction.to_json() for reaction in reactions]
+        pipeline = getReactionPipeline()
+        reactions = Reaction.objects.aggregate(pipeline)
+        response = json_util.dumps(reactions)
         return Response(response, 201, mimetype='application/json')
     
     except Exception as e:
         return jsonify({'error': str(e)})
+     
     
-@reaction_bp.route('getReactionComment/<comment_id>', methods=['GET'])
-def get_reactions_from_comment(comment_id):
+@reaction_bp.route('/<reaction_id>', methods=['DELETE'])
+def delete_reaction(reaction_id):
     try:
-        comment = Comment.objects.get(id=ObjectId(comment_id))
-        reactions = comment.reaction
-        response = [reaction.to_json() for reaction in reactions]
-        return Response(response, 201, mimetype='application/json')
-    
-    except Exception as e:
-        return jsonify({'error': str(e)})
-    
-
-
-
-
-@reaction_bp.route('deleteReactionPost/<post_id>/<reaction_id>', methods=['DELETE'])
-def delete_reaction_post(post_id, reaction_id):
-    try:
-        post = Post.objects.get(id=ObjectId(post_id))
-        reactionList =post.reaction
-        for reaction in reactionList:
-            if reaction._id == ObjectId(reaction_id):
-                reactionList.remove(reaction)
-                post.save()
-                return jsonify({'message': 'Reaction deleted successfully'}), 201
-        return jsonify({'message': 'Reaction not found'}), 201    
-    except Exception as e:
-        return jsonify({'error': str(e)})
-    
-@reaction_bp.route('deleteReactionComment/<comment_id>/<reaction_id>', methods=['DELETE'])
-def delete_reaction_comment(comment_id, reaction_id):
-    try:
-        comment = Comment.objects.get(id=ObjectId(comment_id))
-        reactionList =comment.reaction
-        for reaction in reactionList:
-            if reaction._id == ObjectId(reaction_id):
-                reactionList.remove(reaction)
-                comment.save()
-                print("reaction deleted")
-                return jsonify({'message': 'Reaction deleted successfully'}), 201
-        return jsonify({'message': 'Reaction not found'}), 201
+        reaction = Reaction.objects.get(id=ObjectId(reaction_id))
+        print(reaction)
+        if reaction:
+            reaction.delete()
+            return jsonify({'message': 'Reaction deleted successfully'})
+        else:
+            return jsonify({'message': 'Reaction not found'})
     except Exception as e:
         return jsonify({'error': str(e)})
 
 
-@reaction_bp.route('updateReactionComment/<comment_id>/<reaction_id>', methods=['PUT'])
-def update_reaction_comment(comment_id, reaction_id):
+@reaction_bp.route('/<reaction_id>', methods=['PUT'])
+def update_reaction(reaction_id):
     try:
-        comment = Comment.objects.get(id=ObjectId(comment_id))
-        reactionCommentList = comment.reaction
-        for reaction in reactionCommentList:
-            if reaction._id == ObjectId(reaction_id):
-                reaction.type = request.json['type']
-                reaction.updateDate = db.DateTimeField(default=datetime.now)
-                comment.save()
-                return jsonify({'message': 'Reaction updated successfully'}), 201
-        return jsonify({'message': 'Reaction not found successfully'}), 201
+        reaction = Reaction.objects.get(id=ObjectId(reaction_id))
+        if reaction:
+            reaction.update(**request.json)
+            return jsonify({'message': 'Reaction updated successfully'})
+        else:
+            return jsonify({'message': 'Reaction not found successfully'})
     
     except Exception as e:
-        return jsonify({'error': str(e)})
+        return jsonify({'message': str(e)})
 
-@reaction_bp.route('updateReactionPost/<post_id>/<reaction_id>', methods=['PUT'])
-def update_reaction_post(post_id, reaction_id):
-    try:
-        post = Post.objects.get(id=ObjectId(post_id))
-        reactionPostList = post.reaction
-        for reaction in reactionPostList:
-            if reaction._id == ObjectId(reaction_id):
-                reaction.type = request.json['type']
-                reaction.updateDate = db.DateTimeField(default=datetime.now)
-                post.save()
-                return jsonify({'message': 'Reaction updated successfully'}), 201
-
-        return jsonify({'message': 'Reaction not found '}), 201
-    
-    except Exception as e:
-        return jsonify({'error': str(e)})
-    

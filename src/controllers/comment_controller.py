@@ -3,6 +3,7 @@ from pydantic import ValidationError
 from models import *
 from bson  import  ObjectId, json_util
 from mongoengine.errors import DoesNotExist
+from controllers.pipelines import *
 
 
 Comment_bp = Blueprint('Comment', __name__, url_prefix='/comment')
@@ -33,8 +34,9 @@ def add_comment():
 @Comment_bp.route('/<comment_id>', methods=['GET'])
 def get_comment(comment_id):
     try:
-        comment = Comment.objects.get(id=ObjectId(comment_id))
-        response = comment.to_json()
+        pipeline = getCommentPipeline(comment_id)
+        comment = Comment.objects.aggregate(*pipeline)
+        response = json_util.dumps(comment)
         return Response(response, 201, mimetype='application/json')
     
     except DoesNotExist:
@@ -63,7 +65,7 @@ def delete_comment(comment_id):
     try:
         comment = Comment.objects(id=ObjectId(comment_id))
         if not comment:
-            return jsonify({'error': 'Comment not found'}), 404
+            return jsonify({'message': 'Comment not found'})
         
         comment.delete()
         return jsonify({'message': 'Comment deleted successfully'}), 200
@@ -78,8 +80,9 @@ def delete_comment(comment_id):
 @Comment_bp.route('/allComments/<post_id>', methods=['get'])
 def get_all_comments(post_id):
     try:
-        comments = Comment.objects(postId=ObjectId(post_id)).to_json()
-        response = comments
+        pipeline = getCommentsPostPipeline(post_id)
+        comments = Comment.objects(postId=ObjectId(post_id)).aggregate(*pipeline)
+        response = json_util.dumps(comments)
         return Response(response, mimetype='application/json')
     
     except DoesNotExist:

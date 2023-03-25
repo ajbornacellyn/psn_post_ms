@@ -33,17 +33,15 @@ class Comment(db.Document):
 
 
 class Report(db.Document):
-    _id = fields.ObjectIdField(primary_key=True, default = fields.ObjectId)
     postId = fields.ReferenceField('Post', reverse_delete_rule=CASCADE, required=False)
     commentId = fields.ReferenceField('Comment', reverse_delete_rule=CASCADE, required=False)
-    owner_id = db.IntField(required=True)
+    ownerId = db.IntField(required=True)
     cretedDate = db.DateTimeField(default=datetime.now, required=True)
     updateDate = db.DateTimeField(default=datetime.now, required=True)
     infraction = db.StringField()
     description = db.StringField()
 
 class ContentElement(db.Document):
-    _id = fields.ObjectIdField(primary_key=True, default = fields.ObjectId)
     postId = fields.ReferenceField('Post', reverse_delete_rule=CASCADE, required=False)
     commentId = fields.ReferenceField('Comment', reverse_delete_rule=CASCADE, required=False)
     description = db.StringField()
@@ -52,10 +50,9 @@ class ContentElement(db.Document):
 
 
 class Reaction(db.Document):
-    _id = fields.ObjectIdField(primary_key=True, default = fields.ObjectId)
     postId = fields.ReferenceField('Post', reverse_delete_rule=CASCADE, required=False)
     commentId = fields.ReferenceField('Comment', reverse_delete_rule=CASCADE, required=False)
-    owner_id = db.IntField()
+    ownerId = db.IntField()
     type = db.StringField()
     createdDate = db.DateTimeField(default=datetime.now)
     updatedDate = db.DateTimeField(default=datetime.now)
