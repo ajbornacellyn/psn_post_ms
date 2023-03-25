@@ -8,6 +8,7 @@ from mongoengine import connect
 
 app = Flask(__name__)
 
+
 # connect to database
 MONGO_URI = 'mongodb+srv://jrojasce:jkvUIs1rFxeB4NHR@psn-post-db.izodfgc.mongodb.net/test'
 connect(host=MONGO_URI)
