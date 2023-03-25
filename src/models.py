@@ -5,9 +5,6 @@ from mongoengine import fields
 
 db = MongoEngine()
 
-
-
-    
 class Post(db.Document):
     idOriginalPost = fields.ObjectIdField( default= None)
     createdDate = db.DateTimeField(default=datetime.now)
