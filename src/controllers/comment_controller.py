@@ -25,8 +25,8 @@ def add_comment():
         # Crear y guardar el comentario
         comment = Comment(**comment_data)
         comment.save()
-
-        return jsonify({'message': 'Comment added successfully'}), 201
+        response = comment.to_json()
+        return Response(response, mimetype='application/json')
 
     except Exception as e:
         return jsonify({'error': 'An error occurred', 'message': str(e)}), 500
@@ -34,14 +34,13 @@ def add_comment():
 @Comment_bp.route('/<comment_id>', methods=['GET'])
 def get_comment(comment_id):
     try:
-        pipeline = getCommentPipeline(comment_id)
-        comment = Comment.objects.aggregate(*pipeline)
-        response = json_util.dumps(comment)
+        comment = Comment.objects(id=ObjectId(comment_id)).first()
+        if not comment:
+            return jsonify({'error': 'Comment not found'})
+        
+        response = comment.to_json()
         return Response(response, 201, mimetype='application/json')
     
-    except DoesNotExist:
-        return jsonify({'error': 'Comment not found'}), 404
-
     except Exception as e:
         return jsonify({'error': 'Server error', 'message': str(e)}), 500
     

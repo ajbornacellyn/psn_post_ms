@@ -2,6 +2,7 @@ from datetime import datetime
 from tkinter import CASCADE
 from flask_mongoengine import MongoEngine
 from mongoengine import fields
+import json
 
 db = MongoEngine()
 
@@ -17,6 +18,17 @@ class Post(db.Document):
     report = db.ListField(fields.ReferenceField('Report'), default=None, reverse_delete_rule=CASCADE)
     contentElement = db.ListField(fields.ReferenceField('ContentElement'), default=None, reverse_delete_rule=CASCADE)
 
+    def to_json(self):
+        return str(json.dumps({
+            "id_str": self.id.__str__(),
+            "createdDate": self.createdDate.__str__(),
+            "updatedDate": self.updatedDate.__str__(),
+            "ownerId": self.ownerId,
+            "location": self.location,
+            "description": self.description,
+        }))
+
+
 class Comment(db.Document):
     postId = fields.ReferenceField('Post', reverse_delete_rule=CASCADE, required=True)
     ownerId = db.IntField()
@@ -26,6 +38,16 @@ class Comment(db.Document):
     reaction = db.ListField(fields.ReferenceField('Reaction'), default=None, reverse_delete_rule=CASCADE)
     report = db.ListField(fields.ReferenceField('Report'), default=None, reverse_delete_rule=CASCADE)
     contentElement = db.ListField(fields.ReferenceField('ContentElement'), default=None, reverse_delete_rule=CASCADE)
+
+    def to_json(self):
+        return str(json.dumps({
+            "id_str": self.id.__str__(),
+            "postId": (self.postId.id).__str__(),
+            "ownerId": self.ownerId,
+            "description": self.description,
+            "createdDate": self.createdDate.__str__(),
+            "updatedDate": self.updatedDate.__str__()
+        }))
 
 
 

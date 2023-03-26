@@ -15,10 +15,8 @@ def add_post():
         if not post_data:
             return jsonify({'error': 'No data provided'}), 400
         post = Post(**post_data)
-        post.id
-        post.save()
-        
-        return jsonify({'message': 'Post added successfully'}), 201
+        response = post.to_json()
+        return Response(response, mimetype='application/json')
 
     except ValidationError as e:
         return jsonify({'error': 'Validation error', 'message': str(e)}), 400
@@ -44,10 +42,10 @@ def get_post(post_id):
         return Response(response, 201, mimetype='application/json')
     
     except DoesNotExist:
-        return jsonify({'error': 'Post not found'}), 404
+        return jsonify({'message': 'Post not found'})
 
     except Exception as e:
-        return jsonify({'error': 'Server error', 'message': str(e)}), 500
+        return jsonify({'message': 'Server error', 'message': str(e)})
 
 
 @posts_bp.route('/<post_id>', methods=['PUT'])
@@ -72,10 +70,10 @@ def delete_post(post_id):
         return jsonify({"message": "Post deleted"})
 
     except DoesNotExist:
-        return jsonify({'error': 'Post not found'}), 404
+        return jsonify({'message': 'Post not found'})
 
     except Exception as e:
-        return jsonify({'error': 'Server error', 'message': str(e)}), 500
+        return jsonify({'message': 'Server error', 'message': str(e)})
 
 
 @posts_bp.route('/orderByDate', methods=['GET'])
