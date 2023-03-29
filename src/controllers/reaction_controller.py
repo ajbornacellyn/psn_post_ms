@@ -2,6 +2,7 @@ from flask import Response, Blueprint, request
 from models import *
 from bson  import ObjectId, json_util
 from flask import jsonify
+from mongoengine.errors import DoesNotExist, ValidationError
 from controllers.pipelines import getReactionPipeline
 
 reaction_bp = Blueprint('reaction', __name__, url_prefix='/reaction')
@@ -11,28 +12,36 @@ def add_reaction_to_post():
     try:
         post_id = request.json['postId']
         post = Post.objects.get(id=ObjectId(post_id))
-        if not post:
-            return jsonify({'message': 'post not found'})
         reaction = Reaction(**request.json)
         reaction.save()
         return jsonify({'message': 'Reaction added successfully'}), 201
     
+    except DoesNotExist:
+        return jsonify({'statusCode': 404,'message': ' post not found'}), 404
+
+    except ValidationError as e:
+        return jsonify({'statusCode': 400,'message': 'Bad request'}), 400
+
     except Exception as e:
-        return jsonify({'message': str(e)})
+        return jsonify({'statusCode': 500,'message': str(e)}), 500
     
 @reaction_bp.route('reactToComment', methods=['POST'])
 def add_reaction_to_comment():
     try:
         comment_id = request.json['commentId']
         comment = Comment.objects.get(id=ObjectId(comment_id))
-        if not comment:
-            return jsonify({'message': 'comment not found'})
         reaction = Reaction(**request.json)
         reaction.save()
         return jsonify({'message': 'Reaction added successfully'})
     
+    except DoesNotExist:
+        return jsonify({'statusCode': 404,'message': 'Comment not found'}), 404
+
+    except ValidationError as e:
+        return jsonify({'statusCode': 400,'message': 'Bad request'}), 400
+
     except Exception as e:
-        return jsonify({'error': str(e)})
+        return jsonify({'statusCode': 500,'message': str(e)}), 500
     
 @reaction_bp.route('/', methods=['GET'])
 def get_reactions():
@@ -43,22 +52,23 @@ def get_reactions():
         return Response(response, 201, mimetype='application/json')
     
     except Exception as e:
-        return jsonify({'error': str(e)})
+        return jsonify({'statusCode': 500,'message': str(e)}), 500
      
     
 @reaction_bp.route('/<reaction_id>', methods=['DELETE'])
 def delete_reaction(reaction_id):
     try:
         reaction = Reaction.objects.get(id=ObjectId(reaction_id))
-        print(reaction)
-        if reaction:
-            reaction.delete()
-            return jsonify({'message': 'Reaction deleted successfully'})
-        else:
-            return jsonify({'message': 'Reaction not found'})
-    except Exception as e:
-        return jsonify({'error': str(e)})
+        reaction.delete()
+      
+    except DoesNotExist:
+        return jsonify({'statusCode': 404,'message': ' reaction not found'}), 404
 
+    except ValidationError as e:
+        return jsonify({'statusCode': 400,'message': 'Bad request'}), 400
+
+    except Exception as e:
+        return jsonify({'statusCode': 500,'message': str(e)}), 500
 
 @reaction_bp.route('/<reaction_id>', methods=['PUT'])
 def update_reaction(reaction_id):
@@ -70,6 +80,12 @@ def update_reaction(reaction_id):
         else:
             return jsonify({'message': 'Reaction not found successfully'})
     
+    except DoesNotExist:
+        return jsonify({'statusCode': 404,'message': ' reaction not found'}), 404
+
+    except ValidationError as e:
+        return jsonify({'statusCode': 400,'message': 'Bad request'}), 400
+
     except Exception as e:
-        return jsonify({'message': str(e)})
+        return jsonify({'statusCode': 500,'message': str(e)}), 500
 

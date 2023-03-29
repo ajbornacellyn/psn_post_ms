@@ -1,6 +1,7 @@
 from flask import Response, Blueprint, request
 from models import *
 from bson  import ObjectId
+from mongoengine.errors import DoesNotExist, ValidationError
 from flask import jsonify
 
 report_bp = Blueprint('report', __name__, url_prefix='/report')
@@ -10,28 +11,38 @@ def add_report_to_post():
     try:
         post_id = request.json['postId']
         post = Post.objects.get(id=ObjectId(post_id))
-        if not post:
-            return jsonify({'message': 'post not found'})
+
         report = Report(**request.json)
         report.save()
         return jsonify({'message': 'Report added successfully'})
     
+    except DoesNotExist:
+        return jsonify({'statusCode': 404,'message': ' post not found'}), 404
+
+    except ValidationError as e:
+        return jsonify({'statusCode': 400,'message': 'Bad request'}), 400
+
     except Exception as e:
-        return jsonify({'error': str(e)})
+        return jsonify({'statusCode': 500,'message': str(e)}), 500
     
 @report_bp.route('/addReportToComment', methods=['POST'])
 def add_report_to_comment():
     try:
         comment_id = request.json['commentId']
         comment = Comment.objects.get(id=ObjectId(comment_id))
-        if not comment:
-            return jsonify({'message': 'comment not found'})
+
         report = Report(**request.json)
         report.save()
         return jsonify({'message': 'Report added successfully'})
     
+    except DoesNotExist:
+        return jsonify({'statusCode': 404,'message': ' comment not found'}), 404
+
+    except ValidationError as e:
+        return jsonify({'statusCode': 400,'message': 'Bad request'}), 400
+
     except Exception as e:
-        return jsonify({'error': str(e)})
+        return jsonify({'statusCode': 500,'message': str(e)}), 500
     
 @report_bp.route('/getReportPost/<post_id>', methods=['GET'])
 def get_reports(post_id):
@@ -39,10 +50,10 @@ def get_reports(post_id):
         post = Post.objects.get(id=ObjectId(post_id))
         reports = post.report
         response = [report.to_json() for report in reports]
-        return Response(response, 201, mimetype='application/json')
+        return Response(response, 200, mimetype='application/json')
     
     except Exception as e:
-        return jsonify({'error': str(e)})
+        return jsonify({'statusCode': 500,'message': str(e)}), 500
     
 
 @report_bp.route('/getReportComment/<comment_id>', methods=['GET'])
@@ -54,19 +65,26 @@ def get_reports_from_comment(comment_id):
         return Response(response, 201, mimetype='application/json')
     
     except Exception as e:
-        return jsonify({'error': str(e)})
+        return jsonify({'statusCode': 500,'message': str(e)}), 500
+    
     
 
 @report_bp.route('/<report_id>', methods=['DELETE'])
 def delete_report(report_id):
     try:
         report = Report.objects.get(id=ObjectId(report_id))
-        if not report:
-            return jsonify({'message': 'report not found'})
         report.delete()
         return jsonify({'message': 'Report deleted successfully'})
+
+    except DoesNotExist:
+        return jsonify({'statusCode': 404,'message': ' report not found'}), 404
+
+    except ValidationError as e:
+        return jsonify({'statusCode': 400,'message': 'Bad request'}), 400
+
     except Exception as e:
-        return jsonify({'error': str(e)})
+        return jsonify({'statusCode': 500,'message': str(e)}), 500
+    
     
 
 
@@ -85,10 +103,15 @@ def update_report_post(post_id, report_id):
                 post.save()
                 return jsonify({'message': 'Report updated successfully'}), 201
             
-        return jsonify({'message': 'Report not found'}), 201
-    
+    except DoesNotExist:
+        return jsonify({'statusCode': 404,'message': ' post not found'}), 404
+
+    except ValidationError as e:
+        return jsonify({'statusCode': 400,'message': 'Bad request'}), 400
+
     except Exception as e:
-        return jsonify({'error': str(e)})    
+        return jsonify({'statusCode': 500,'message': str(e)}), 500   
+
 
 @report_bp.route('/updateReportComment/<comment_id>/<report_id>', methods=['PUT'])
 def update_report_comment(comment_id, report_id):
@@ -104,7 +127,11 @@ def update_report_comment(comment_id, report_id):
                 comment.save()
                 return jsonify({'message': 'Report updated successfully'}), 201
             
-        return jsonify({'message': 'Report not found'}), 201
-    
+    except DoesNotExist:
+        return jsonify({'statusCode': 404,'message': ' comment not found'}), 404
+
+    except ValidationError as e:
+        return jsonify({'statusCode': 400,'message': 'Bad request'}), 400
+
     except Exception as e:
-        return jsonify({'error': str(e)})
+        return jsonify({'statusCode': 500,'message': str(e)}), 500

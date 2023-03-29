@@ -1,35 +1,34 @@
 from flask import Flask, Response, Blueprint, request, jsonify
-from pydantic import ValidationError
 from models import *
 from bson  import  ObjectId, json_util
-from mongoengine.errors import DoesNotExist
+from mongoengine.errors import DoesNotExist, ValidationError
 from controllers.pipelines import *
 
 
 Comment_bp = Blueprint('Comment', __name__, url_prefix='/comment')
 
+
 @Comment_bp.route('/', methods=['POST'])
 def add_comment():
     try:
         comment_data = request.get_json()
-
-        # Verificar que el objeto JSON tenga los campos requeridos
-        if 'postId' not in comment_data or 'description' not in comment_data:
-            return jsonify({'error': 'Required fields are missing'}), 400
-
         # Verificar que el post exista
         post = Post.objects(id=ObjectId(comment_data['postId'])).first()
-        if not post:
-            return jsonify({'error': 'Post not found'}), 404
-
         # Crear y guardar el comentario
         comment = Comment(**comment_data)
+        comment.postId= post.id
         comment.save()
         response = comment.to_json()
         return Response(response, mimetype='application/json')
 
+    except DoesNotExist:
+        return jsonify({'statusCode': 404,'message': ' post not found'}), 404
+
+    except ValidationError as e:
+        return jsonify({'statusCode': 400,'message': 'Bad request'}), 400
+
     except Exception as e:
-        return jsonify({'error': 'An error occurred', 'message': str(e)}), 500
+        return jsonify({'statusCode': 500,'message': str(e)}), 500
     
 @Comment_bp.route('/<comment_id>', methods=['GET'])
 def get_comment(comment_id):
@@ -48,8 +47,6 @@ def get_comment(comment_id):
 def update_comment(comment_id):
     try:
         comment = Comment.objects(id=ObjectId(comment_id))
-        if not comment:
-            return jsonify({'error': 'Comment not found'}), 404
         comment.update(**request.json)
         return jsonify({'message': 'Comment updated successfully'}),200
     
@@ -62,10 +59,7 @@ def update_comment(comment_id):
 @Comment_bp.route('/<comment_id>', methods=['DELETE'])
 def delete_comment(comment_id):
     try:
-        comment = Comment.objects(id=ObjectId(comment_id))
-        if not comment:
-            return jsonify({'message': 'Comment not found'})
-        
+        comment = Comment.objects(id=ObjectId(comment_id)) 
         comment.delete()
         return jsonify({'message': 'Comment deleted successfully'}), 200
     

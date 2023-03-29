@@ -20,7 +20,7 @@ class Post(db.Document):
 
     def to_json(self):
         return str(json.dumps({
-            "id_str": self.id.__str__(),
+            "id_str": (self.id).__str__(),
             "createdDate": self.createdDate.__str__(),
             "updatedDate": self.updatedDate.__str__(),
             "ownerId": self.ownerId,
