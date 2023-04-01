@@ -7,32 +7,37 @@ from mongoengine.errors import DoesNotExist, ValidationError
 contentElement_bp = Blueprint('contentElement', __name__, url_prefix='/contentElement')
 
 
-@contentElement_bp.route('/', methods=['POST'])
+@contentElement_bp.route('/addContentToPost', methods=['POST'])
 def add_contentElement():
     try:
         content_data = request.json
-        if 'postId' in content_data:
-            post = Post.objects(id=ObjectId(content_data['postId'])).first()
-            if not post:
-                return jsonify({'message': 'post not found'})
-            else:
-                content = ContentElement(**request.json)
-                content.save()
-                return jsonify({'message': 'ContentElement added successfully'})
-        elif 'commentId' in content_data:
-            comment = Comment.objects(id=ObjectId(content_data['commentId'])).first()
-            if not comment:
-                return jsonify({'message': 'comment not found'})
-            else:
-                content = ContentElement(**request.json)
-                content.save()
-                return jsonify({'message': 'ContentElement added successfully'})
-        else:
-            return jsonify({'message': 'please provide a post or comment id'})
-
+        content = ContentElement(**content_data)
+        content.validate()
+        post = Post.objects.get(_id=content_data['postId'])
+        content.save()
+        return Response(content.to_json(), 201, mimetype='application/json')
 
     except DoesNotExist:
-        return jsonify({'statusCode': 404,'message': ' comment  or post not found'}), 404
+        return jsonify({'statusCode': 404,'message': ' post  not found'}), 404
+
+    except ValidationError as e:
+        return jsonify({'statusCode': 400,'message': 'Bad request'}), 400
+
+    except Exception as e:
+        return jsonify({'statusCode': 500,'message': str(e)}), 500
+
+
+@contentElement_bp.route('/addContentToComment', methods=['POST'])
+def add_contentElement_to_comment():
+    try:
+        content_data = request.json
+        content = ContentElement(**content_data)
+        content.validate()
+        comment = Comment.objects.get(_id=content_data['commentId'])
+        content.save()
+        return Response(content.to_json(), 201, mimetype='application/json')
+    except DoesNotExist:
+        return jsonify({'statusCode': 404,'message': ' comment  not found'}), 404
 
     except ValidationError as e:
         return jsonify({'statusCode': 400,'message': 'Bad request'}), 400
@@ -42,14 +47,15 @@ def add_contentElement():
     
 
 @contentElement_bp.route('getContentPost/<post_id>', methods=['GET'])
-def get_contentElements(post_id):
+def get_contentElements_from_post(post_id):
     try:
-        contents = ContentElement.objects.get(id=ObjectId(post_id))
+        post = Post.objects.get(_id=post_id)
+        contents = ContentElement.objects(postId=post_id)
         response = contents.to_json()
         return Response(response, 201, mimetype='application/json')
     
     except DoesNotExist:
-        return jsonify({'statusCode': 404,'message': ' content element not found'}), 404
+        return jsonify({'statusCode': 404,'message': ' post not found'}), 404
 
     except ValidationError as e:
         return jsonify({'statusCode': 400,'message': 'Bad request'}), 400
@@ -61,13 +67,12 @@ def get_contentElements(post_id):
 @contentElement_bp.route('getContentComment/<comment_id>', methods=['GET'])
 def get_contentElements_from_comment(comment_id):
     try:
-        comment = Comment.objects.get(id=ObjectId(comment_id))
-        contentElements = comment.contentElement
-        response = [contentElement.to_json() for contentElement in contentElements]
+        comment = Comment.objects.get(_id=comment_id)
+        contentElements = ContentElement.objects(commentId=comment_id)
         return Response(response, 201, mimetype='application/json')
     
     except DoesNotExist:
-        return jsonify({'statusCode': 404,'message': ' content element not found'}), 404
+        return jsonify({'statusCode': 404,'message': ' comment not found'}), 404
 
     except ValidationError as e:
         return jsonify({'statusCode': 400,'message': 'Bad request'}), 400
@@ -77,11 +82,11 @@ def get_contentElements_from_comment(comment_id):
 
 
 
-@contentElement_bp.route('deleteContentPost/<post_id>/<contentElement_id>', methods=['DELETE'])
-def delete_contentElementt_post(post_id, contentElement_id):
+@contentElement_bp.route('deleteContentElement/<contentElement_id>', methods=['DELETE'])
+def delete_contentElementt(contentElement_id):
     try:
-        post = Post.objects.get(id=ObjectId(post_id))
-        post.update(pull__contentElement__=ContentElement(_id = ObjectId(contentElement_id)))
+        contentElement = ContentElement.objects.get(_id=contentElement_id)
+        contentElement.delete()
         return jsonify({'message': 'ContentElement deleted successfully'}), 200
     
     except DoesNotExist:
@@ -94,29 +99,12 @@ def delete_contentElementt_post(post_id, contentElement_id):
         return jsonify({'statusCode': 500,'message': str(e)}), 500
 
 
-@contentElement_bp.route('deleteContentComment/<comment_id>/<contentElement_id>', methods=['DELETE'])
-def delete_contentElement_comment(comment_id, contentElement_id):
+
+
+@contentElement_bp.route('/<contentElement_id>', methods=['PUT'])
+def update_contentElement(contentElement_id):
     try:
-        comment = Comment.objects.get(id=ObjectId(comment_id))
-        comment.update(pull__contentElement__=ContentElement(_id = ObjectId(contentElement_id)))
-        return jsonify({'message': 'ContentElement deleted successfully'}), 200
-    
-    except DoesNotExist:
-        return jsonify({'statusCode': 404,'message': ' content element not found'}), 404
-
-    except ValidationError as e:
-        return jsonify({'statusCode': 400,'message': 'Bad request'}), 400
-
-    except Exception as e:
-        return jsonify({'statusCode': 500,'message': str(e)}), 500
-    
-
-
-@contentElement_bp.route('/<post_id>/<contentElement_id>', methods=['PUT'])
-def update_contentElement_post(post_id, contentElement_id):
-    try:
-        post = Post.objects.get(id=ObjectId(post_id))
-        contentElement = ContentElement.objects.get(id=ObjectId(contentElement_id))
+        contentElement = ContentElement.objects.get(_id=contentElement_id)
         contentElement.update(**request.json)
         return jsonify({'message': 'ContentElement updated successfully'}), 200
     
@@ -130,22 +118,6 @@ def update_contentElement_post(post_id, contentElement_id):
         return jsonify({'statusCode': 500,'message': str(e)}), 500
     
 
-@contentElement_bp.route('/<comment_id>/<contentElement_id>', methods=['PUT'])
-def update_contentElement_comment(comment_id, contentElement_id):
-    try:
-        comment = Comment.objects.get(id=ObjectId(comment_id))
-        contentElement = ContentElement.objects.get(id=ObjectId(contentElement_id))
-        contentElement.update(**request.json)
-        return jsonify({'message': 'ContentElement updated successfully'}), 200
-    
-    except DoesNotExist:
-        return jsonify({'statusCode': 404,'message': ' content element not found'}), 404
-
-    except ValidationError as e:
-        return jsonify({'statusCode': 400,'message': 'Bad request'}), 400
-
-    except Exception as e:
-        return jsonify({'statusCode': 500,'message': str(e)}), 500
 
     
     

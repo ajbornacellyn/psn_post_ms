@@ -3,9 +3,118 @@
 from bson import ObjectId
 
 
-def getPostPipeline():
+def getPostPipeline(postId):
     pipeline = [
+  {
+    "$match": {
+      "_id": postId
+    }
+  },
+  {
+    "$lookup": {
+      "from": "comment",
+      "localField": "_id",
+      "foreignField": "postId",
+      "as": "comments"
+    }
+  },
+  {
+    "$lookup": {
+      "from": "report",
+      "localField": "_id",
+      "foreignField": "postId",
+      "as": "reports"
+    }
+  },
+  {
+    "$lookup": {
+      "from": "reaction",
+      "localField": "_id",
+      "foreignField": "postId",
+      "as": "reactions"
+    }
+  },
+  {
+    "$lookup": {
+      "from": "content_element",
+      "localField": "_id",
+      "foreignField": "postId",
+      "as": "contentelement"
+    }
+  },
+  {
+  "$sort": {
+            "createdDate": -1
+            }
+    }
+]
+
+    return pipeline
+
+def getPostsByOwner(owner_id):
+    pipeline = [
+        {
+            "$match": {
+                "ownerId": int(owner_id)
+            }
+        },
+        {
+            "$lookup": {
+                "from": "comment",
+                "localField": "_id",
+                "foreignField": "postId",
+                "as": "comments"
+            }
+        },
+        {
+            "$lookup": {
+                "from": "report",
+                "localField": "_id",
+                "foreignField": "postId",
+                "as": "reports"
+            }
+        },
+        {
+            "$lookup": {
+                "from": "reaction",
+                "localField": "_id",
+                "foreignField": "postId",
+                "as": "reactions"
+            }
+        },
+        {
+            "$lookup": {
+                "from": "content_element",
+                "localField": "_id",
+                "foreignField": "postId",
+                "as": "contentelement"
+            }
+        },
+        {
+            "$sort": {
+            "createdDate": -1
+            }
+        }
+    ]
+
+    return pipeline
+
+    
+    
+    
+
+
+def getPostContentElementPipeline():
+    pipeline =pipeline = [
     {
+    "$lookup": {
+                "from": "content_element",
+                "localField": "_id",
+                "foreignField": "postId",
+                "as": "content_elements"
+            }
+        },
+        {
         "$lookup": {
             "from": "comment",
             "localField": "_id",
@@ -14,47 +123,31 @@ def getPostPipeline():
         }
     },
     {
-        "$lookup": {
-            "from": "report",
-            "localField": "_id",
-            "foreignField": "postId",
-            "as": "reports"
+        "$unwind": {
+            "path": "$comments",
+            "preserveNullAndEmptyArrays": True
         }
     },
     {
         "$lookup": {
             "from": "reaction",
-            "localField": "_id",
-            "foreignField": "postId",
-            "as": "reactions"
+            "localField": "comments._id",
+            "foreignField": "commentId",
+            "as": "comments.reactions"
         }
     },
     {
-        "$lookup": {
-            "from": "contentelement",
-            "localField": "_id",
-            "foreignField": "postId",
-            "as": "contentElements"
-        }
-    },
-    {
-        "$addFields": {
-            "id_str": {"$toString": "$_id"}
-        }
-    },
-    {
-        "$project": {
-            "_id": 0,
-            "id_str": 1,
-            "createdDate": 1,
-            "updatedDate": 1,
-            "ownerId": 1,
-            "location": 1,
-            "description": 1,
-            "comments": 1,
-            "reports": 1,
-            "reactions": 1,
-            "contentElements": 1
+        "$group": {
+            "_id": "$_id",
+            "idOriginalPost": {"$first": "$idOriginalPost"},
+            "createdDate": {"$first": "$createdDate"},
+            "updatedDate": {"$first": "$updatedDate"},
+            "ownerId": {"$first": "$ownerId"},
+            "location": {"$first": "$location"},
+            "description": {"$first": "$description"},
+            "contentElement": {"$first": "$content_elements"},
+            "num_comments": {"$sum": 1},
+            "num_reactions": {"$sum": {"$size": "$comments.reactions"}}
         }
     }
 ]
@@ -63,34 +156,47 @@ def getPostPipeline():
 
 def getCommentsPostPipeline(post_id):
     pipeline = [
-        {
+         {
             "$match": {
-                "postId": ObjectId(post_id)
+                "postId": post_id
+            }
+        },
+
+        {
+            "$lookup": {
+                "from": "reaction",
+                "localField": "_id",
+                "foreignField": "commentId",
+                "as": "Reactions"
             }
         },
         {
-            "$addFields": {
-                "postId": { "$toString": "$postId" },
-                "_id": { "$toString": "$_id" }
+            "$lookup": {
+                "from": "report",
+                "localField": "_id",
+                "foreignField": "commentId",
+                "as": "reports"
             }
         },
         {
-            "$project": {
-                "_id": 1,
-                "ownerId": 1,
-                "description": 1,
-                "createdDate": 1,
-                "updatedDate": 1
+            "$lookup": {
+                "from": "contentelement",
+                "localField": "_id",
+                "foreignField": "commentId",
+                "as": "contentElements"
             }
         }
     ]
+
     return pipeline
 
-def getCommentPipeline(commentId):
+
+
+def getCommentPipeline(Post_id):
     pipeline = [
         {
             "$match": {
-                "_id": ObjectId(commentId)
+                "_id": Post_id
             }
         },
         {

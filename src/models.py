@@ -3,10 +3,15 @@ from tkinter import CASCADE
 from flask_mongoengine import MongoEngine
 from mongoengine import fields
 import json
+import bson
+from bson import ObjectId
+from mongoengine import *
+
 
 db = MongoEngine()
 
 class Post(db.Document):
+    _id = db.StringField(primary_key=True, default=lambda: str(ObjectId()))
     idOriginalPost = fields.ObjectIdField( default= None)
     createdDate = db.DateTimeField(default=datetime.now)
     updatedDate= db.DateTimeField(default=datetime.now)
@@ -17,20 +22,12 @@ class Post(db.Document):
     reaction = db.ListField(fields.ReferenceField('Reaction'), default=None, reverse_delete_rule=CASCADE)
     report = db.ListField(fields.ReferenceField('Report'), default=None, reverse_delete_rule=CASCADE)
     contentElement = db.ListField(fields.ReferenceField('ContentElement'), default=None, reverse_delete_rule=CASCADE)
-
-    def to_json(self):
-        return str(json.dumps({
-            "id_str": (self.id).__str__(),
-            "createdDate": self.createdDate.__str__(),
-            "updatedDate": self.updatedDate.__str__(),
-            "ownerId": self.ownerId,
-            "location": self.location,
-            "description": self.description,
-        }))
-
+    
 
 class Comment(db.Document):
-    postId = fields.ReferenceField('Post', reverse_delete_rule=CASCADE, required=True)
+    _id = db.StringField(primary_key=True, default=lambda: str(ObjectId()))
+    parentCommentId = db.ReferenceField('self', reverse_delete_rule=CASCADE, required=False, min_length=1)
+    postId = fields.ReferenceField('Post', reverse_delete_rule=CASCADE, required=False, min_length=1)
     ownerId = db.IntField()
     createdDate = db.DateTimeField(default=datetime.now)
     updatedDate= db.DateTimeField(default=datetime.now)
@@ -39,36 +36,41 @@ class Comment(db.Document):
     report = db.ListField(fields.ReferenceField('Report'), default=None, reverse_delete_rule=CASCADE)
     contentElement = db.ListField(fields.ReferenceField('ContentElement'), default=None, reverse_delete_rule=CASCADE)
 
-    def to_json(self):
-        return str(json.dumps({
-            "id_str": self.id.__str__(),
-            "postId": (self.postId.id).__str__(),
-            "ownerId": self.ownerId,
-            "description": self.description,
-            "createdDate": self.createdDate.__str__(),
-            "updatedDate": self.updatedDate.__str__()
-        }))
-
-
+    def clean(self):
+        if not self.postId and not self.parentCommentId:
+            raise ValidationError('Al menos uno de los dos campos es requerido.')
 
 class Report(db.Document):
+    _id = db.StringField(primary_key=True, default=lambda: str(ObjectId()))
     postId = fields.ReferenceField('Post', reverse_delete_rule=CASCADE, required=False)
     commentId = fields.ReferenceField('Comment', reverse_delete_rule=CASCADE, required=False)
     ownerId = db.IntField(required=True)
     cretedDate = db.DateTimeField(default=datetime.now, required=True)
-    updateDate = db.DateTimeField(default=datetime.now, required=True)
+    updatedDate = db.DateTimeField(default=datetime.now, required=True)
     infraction = db.StringField()
     description = db.StringField()
 
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        self.id_str = str(self.id)
+        super().save(*args, **kwargs)
+
+
 class ContentElement(db.Document):
-    postId = fields.ReferenceField('Post', reverse_delete_rule=CASCADE, required=False)
-    commentId = fields.ReferenceField('Comment', reverse_delete_rule=CASCADE, required=False)
+    _id = db.StringField(primary_key=True, default=lambda: str(ObjectId()))
+    postId = fields.ReferenceField('Post', reverse_delete_rule=CASCADE, required=False, min_length=1)
+    commentId = fields.ReferenceField('Comment', reverse_delete_rule=CASCADE, required=False, min_length=1)
     description = db.StringField()
     mediaLocator = db.StringField()
     mediaType = db.StringField()
+    def clean(self):
+        if not self.postId and not self.commentId:
+            raise ValidationError('Al menos uno de los dos campos es requerido.')
+
 
 
 class Reaction(db.Document):
+    _id = db.StringField(primary_key=True, default=lambda: str(ObjectId()))
     postId = fields.ReferenceField('Post', reverse_delete_rule=CASCADE, required=False)
     commentId = fields.ReferenceField('Comment', reverse_delete_rule=CASCADE, required=False)
     ownerId = db.IntField()
