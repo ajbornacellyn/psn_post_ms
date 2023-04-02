@@ -39,7 +39,7 @@ def getPostPipeline(postId):
       "from": "content_element",
       "localField": "_id",
       "foreignField": "postId",
-      "as": "contentelement"
+      "as": "contentElement"
     }
   },
   {
@@ -106,8 +106,8 @@ def getPostsByOwner(owner_id):
 
 def getPostContentElementPipeline():
     pipeline =pipeline = [
-    {
-    "$lookup": {
+        {
+            "$lookup": {
                 "from": "content_element",
                 "localField": "_id",
                 "foreignField": "postId",
@@ -115,42 +115,42 @@ def getPostContentElementPipeline():
             }
         },
         {
-        "$lookup": {
-            "from": "comment",
-            "localField": "_id",
-            "foreignField": "postId",
-            "as": "comments"
+            "$lookup": {
+                "from": "comment",
+                "localField": "_id",
+                "foreignField": "postId",
+                "as": "comments"
+            }
+        },
+        {
+            "$lookup": {
+                "from": "reaction",
+                "localField": "_id",
+                "foreignField": "postId",
+                "as": "post.reactions"
+            }
+        },
+        {
+            "$group": {
+                "_id": "$_id",
+                "idOriginalPost": { "$first": "$idOriginalPost" },
+                "createdDate": { "$first": "$createdDate" },
+                "updatedDate": { "$first": "$updatedDate" },
+                "ownerId": { "$first": "$ownerId" },
+                "location": { "$first": "$location" },
+                "description": { "$first": "$description" },
+                "contentElement": { "$first": "$content_elements" },
+                "num_comments": { "$sum": { "$size": "$comments" } },
+                "num_reactions": { "$sum": { "$size": "$post.reactions" } },
+            }
+        },
+        {
+            "$sort": {
+                "num_reactions": -1,
+                "num_comments": -1
+            }
         }
-    },
-    {
-        "$unwind": {
-            "path": "$comments",
-            "preserveNullAndEmptyArrays": True
-        }
-    },
-    {
-        "$lookup": {
-            "from": "reaction",
-            "localField": "comments._id",
-            "foreignField": "commentId",
-            "as": "comments.reactions"
-        }
-    },
-    {
-        "$group": {
-            "_id": "$_id",
-            "idOriginalPost": {"$first": "$idOriginalPost"},
-            "createdDate": {"$first": "$createdDate"},
-            "updatedDate": {"$first": "$updatedDate"},
-            "ownerId": {"$first": "$ownerId"},
-            "location": {"$first": "$location"},
-            "description": {"$first": "$description"},
-            "contentElement": {"$first": "$content_elements"},
-            "num_comments": {"$sum": 1},
-            "num_reactions": {"$sum": {"$size": "$comments.reactions"}}
-        }
-    }
-]
+    ]
 
     return pipeline
 
@@ -239,3 +239,96 @@ def getReactionPipeline():
         }
     ]
     return pipeline
+
+def getCommentsThreadPipeline(postId):
+    pipeline = [
+  {
+    "$match": { "postId": postId }
+  },
+  {
+    "$graphLookup": {
+      "from": "comment",
+      "startWith": "$_id",
+      "connectFromField": "_id",
+      "connectToField": "parentCommentId",
+      "as": "commentTherad"
+    }
+  },
+  {
+    "$lookup": {
+      "from": "content_element",
+      "localField": "_id",
+      "foreignField": "commentId",
+      "as": "content_elements"
+    }
+  },
+  {
+    "$lookup": {
+      "from": "reaction",
+      "localField": "_id",
+      "foreignField": "commentId",
+      "as": "reactions"
+    }
+  },
+  {
+    "$lookup": {
+      "from": "report",
+      "localField": "_id",
+      "foreignField": "commentId",
+      "as": "reports"
+    }
+  },
+  {
+    "$unwind": "$commentTherad"
+  },
+  {
+    "$lookup": {
+      "from": "content_element",
+      "localField": "commentTherad._id",
+      "foreignField": "commentId",
+      "as": "commentTherad.content_elements"
+    }
+  },
+  {
+    "$lookup": {
+      "from": "reaction",
+      "localField": "commentTherad._id",
+      "foreignField": "commentId",
+      "as": "commentTherad.reactions"
+    }
+  },
+  {
+    "$lookup": {
+      "from": "report",
+      "localField": "commentTherad._id",
+      "foreignField": "commentId",
+      "as": "commentTherad.reports"
+    }
+  },
+  {
+    "$group": {
+      "_id": "$_id",
+      "post": { "$first": "$$ROOT" },
+      "commentTherad": { "$push": "$commentTherad" }
+    }
+  },
+  {
+    "$project": {
+      "_id": "$post._id",
+      "idOriginalPost": "$post.idOriginalPost",
+      "createdDate": "$post.createdDate",
+      "updatedDate": "$post.updatedDate",
+      "ownerId": "$post.ownerId",
+      "location": "$post.location",
+      "description": "$post.description",
+      "content_elements": "$post.content_elements",
+      "reactions": "$post.reactions",
+      "reports": "$post.reports",
+      "commentTherad": 1
+    }
+  }
+]
+
+    return pipeline
+
+

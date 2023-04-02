@@ -66,6 +66,18 @@ def get_comment(comment_id):
     
     except Exception as e:
         return jsonify({'error': 'Server error', 'message': str(e)}), 500
+
+@Comment_bp.route('/commentsThread/<postId>', methods=['GET'])
+def get_comments_thread(postId):
+    try:
+        pipeline = getCommentsThreadPipeline(postId)
+        comments = Comment.objects.aggregate(*pipeline)
+        response = json_util.dumps(comments)
+        return Response(response, 201, mimetype='application/json')
+    
+    except Exception as e:
+        return jsonify({'error': 'Server error', 'message': str(e)}), 500
+
     
 @Comment_bp.route('/<comment_id>', methods=['PUT'])
 def update_comment(comment_id):
