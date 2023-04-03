@@ -87,7 +87,7 @@ def getPostsByOwner(owner_id):
                 "from": "content_element",
                 "localField": "_id",
                 "foreignField": "postId",
-                "as": "contentelement"
+                "as": "contentElement"
             }
         },
         {
@@ -104,7 +104,7 @@ def getPostsByOwner(owner_id):
     
 
 
-def getPostContentElementPipeline():
+def getPostcontentElementPipeline():
     pipeline =pipeline = [
         {
             "$lookup": {
@@ -180,7 +180,7 @@ def getCommentsPostPipeline(post_id):
         },
         {
             "$lookup": {
-                "from": "contentelement",
+                "from": "contentElement",
                 "localField": "_id",
                 "foreignField": "commentId",
                 "as": "contentElements"
