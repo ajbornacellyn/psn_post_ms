@@ -84,7 +84,8 @@ def update_comment(comment_id):
     try:
         comment = Comment.objects.get(_id=comment_id)
         comment.update(**request.json)
-        return jsonify({'message': 'Comment updated successfully'}),200
+        response = comment.to_json()
+        return Response(response, mimetype='application/json')
     
     except DoesNotExist:
         return jsonify({'error': 'Comment not found'}), 404

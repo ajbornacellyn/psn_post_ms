@@ -61,7 +61,7 @@ def get_reactions():
 @reaction_bp.route('/<reaction_id>', methods=['DELETE'])
 def delete_reaction(reaction_id):
     try:
-        reaction = Reaction.objects.get(id=reaction_id)
+        reaction = Reaction.objects.get(_id=reaction_id)
         reaction.delete()
       
     except DoesNotExist:
@@ -76,8 +76,10 @@ def delete_reaction(reaction_id):
 @reaction_bp.route('/<reaction_id>', methods=['PUT'])
 def update_reaction(reaction_id):
     try:
-        reaction = Reaction.objects.get(id=reaction_id)
+        reaction = Reaction.objects.get(_id=reaction_id)
         reaction.update(**request.json)
+        response = reaction.to_json()
+        return Response(response, 201, mimetype='application/json')
     except DoesNotExist:
         return jsonify({'statusCode': 404,'message': ' reaction not found'}), 404
 

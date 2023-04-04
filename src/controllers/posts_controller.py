@@ -75,7 +75,7 @@ def get_posts_by_owner(owner_id):
 @posts_bp.route('/postInfo', methods=['GET'])
 def get_posts_Info():
     try:
-        pipeline = getPostContentElementPipeline()
+        pipeline = getPostcontentElementPipeline()
         response = Post.objects.aggregate(*pipeline)
         response = json_util.dumps(response)
         return Response(response, mimetype='application/json')

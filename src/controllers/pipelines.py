@@ -1,5 +1,3 @@
-
-
 from bson import ObjectId
 
 
@@ -101,9 +99,6 @@ def getPostsByOwner(owner_id):
 
     
     
-    
-
-
 def getPostcontentElementPipeline():
     pipeline =pipeline = [
         {
