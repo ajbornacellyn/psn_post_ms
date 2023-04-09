@@ -6,8 +6,6 @@ WORKDIR /code
 COPY requirements.txt /code/
 RUN pip install -r requirements.txt
 COPY . /code/
-ARG URL=0.0.0.0:8080 
 
+EXPOSE 4100
 CMD ["python", "src/app.py"]
-
-

@@ -3,4 +3,4 @@ services:
   psn_posts_ms:
     build: .
     ports:
-      - "3000:3000"
+      - "4100:4100"
