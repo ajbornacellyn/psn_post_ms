@@ -1,6 +1,17 @@
-version: '3'
+version: '4.17'
 services:
-  psn_posts_ms:
+  psn-post-ms-service:
+    image: psn-post-ms-service
     build: .
+    container_name: psn-post-ms-service
     ports:
       - "4100:4100"
+    environment:
+      - MONGO_URI=mongodb+srv://jrojasce:jkvUIs1rFxeB4NHR@psn-post-db.izodfgc.mongodb.net/test
+      - PORT=4100
+    networks:
+      - psn_network
+
+networks:
+  psn_network:
+    external: true
