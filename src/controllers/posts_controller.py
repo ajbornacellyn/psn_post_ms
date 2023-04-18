@@ -4,10 +4,8 @@ from bson  import  ObjectId, json_util
 from mongoengine.errors import DoesNotExist, ValidationError
 from controllers.pipelines import *
 
-
 posts_bp = Blueprint('posts', __name__, url_prefix='/posts')
 
-# add post or shar post
 @posts_bp.route('/', methods=['POST'])
 def add_post():
     try:
@@ -88,6 +86,8 @@ def update_post(post_id):
     try:
         post = Post.objects.get(_id=post_id)
         post.update(**request.json)
+        post.save()
+        post.reload()
         response = post.to_json()
         return Response(response,status=200,  mimetype='application/json')
     

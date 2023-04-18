@@ -84,6 +84,8 @@ def update_comment(comment_id):
     try:
         comment = Comment.objects.get(_id=comment_id)
         comment.update(**request.json)
+        comment.save()
+        comment.reload()
         response = comment.to_json()
         return Response(response, mimetype='application/json')
     

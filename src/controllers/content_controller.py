@@ -106,6 +106,7 @@ def update_contentElement(contentElement_id):
     try:
         contentElement = ContentElement.objects.get(_id=contentElement_id)
         contentElement.update(**request.json)
+        contentElement.reload()
         return jsonify({'message': 'ContentElement updated successfully'}), 200
     
     except DoesNotExist:

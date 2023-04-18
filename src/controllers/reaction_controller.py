@@ -78,6 +78,8 @@ def update_reaction(reaction_id):
     try:
         reaction = Reaction.objects.get(_id=reaction_id)
         reaction.update(**request.json)
+        reaction.save()
+        reaction.reload()
         response = reaction.to_json()
         return Response(response, 201, mimetype='application/json')
     except DoesNotExist:

@@ -108,6 +108,8 @@ def update_report(report_id):
     try:
         report = Report.objects.get(id=report_id)
         report.update(**request.json)
+        report.save()
+        report.reload()
         response = report.to_json()
         return Response(response, 200, mimetype='application/json')
         
