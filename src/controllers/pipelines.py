@@ -274,7 +274,10 @@ def getCommentsThreadPipeline(postId):
     }
   },
   {
-    "$unwind": "$commentTherad"
+    "$unwind": {
+      "path": "$commentTherad",
+      "preserveNullAndEmptyArrays": True
+    }
   },
   {
     "$lookup": {
@@ -323,6 +326,7 @@ def getCommentsThreadPipeline(postId):
     }
   }
 ]
+
 
     return pipeline
 
