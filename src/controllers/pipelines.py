@@ -246,7 +246,7 @@ def getCommentsThreadPipeline(postId):
       "startWith": "$_id",
       "connectFromField": "_id",
       "connectToField": "parentCommentId",
-      "as": "commentTherad"
+      "as": "commentThread"
     }
   },
   {
@@ -275,39 +275,39 @@ def getCommentsThreadPipeline(postId):
   },
   {
     "$unwind": {
-      "path": "$commentTherad",
+      "path": "$commentThread",
       "preserveNullAndEmptyArrays": True
     }
   },
   {
     "$lookup": {
       "from": "content_element",
-      "localField": "commentTherad._id",
+      "localField": "commentThread._id",
       "foreignField": "commentId",
-      "as": "commentTherad.content_elements"
+      "as": "commentThread.content_elements"
     }
   },
   {
     "$lookup": {
       "from": "reaction",
-      "localField": "commentTherad._id",
+      "localField": "commentThread._id",
       "foreignField": "commentId",
-      "as": "commentTherad.reactions"
+      "as": "commentThread.reactions"
     }
   },
   {
     "$lookup": {
       "from": "report",
-      "localField": "commentTherad._id",
+      "localField": "commentThread._id",
       "foreignField": "commentId",
-      "as": "commentTherad.reports"
+      "as": "commentThread.reports"
     }
   },
   {
     "$group": {
       "_id": "$_id",
       "post": { "$first": "$$ROOT" },
-      "commentTherad": { "$push": "$commentTherad" }
+      "commentThread": { "$push": "$commentThread" }
     }
   },
   {
@@ -322,7 +322,7 @@ def getCommentsThreadPipeline(postId):
       "content_elements": "$post.content_elements",
       "reactions": "$post.reactions",
       "reports": "$post.reports",
-      "commentTherad": 1
+      "commentThread": 1
     }
   }
 ]
