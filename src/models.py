@@ -12,7 +12,7 @@ db = MongoEngine()
 
 class Post(db.Document):
     _id = db.StringField(primary_key=True, default=lambda: str(ObjectId()))
-    idOriginalPost = fields.ObjectIdField( default= None)
+    idOriginalPost = db.StringField(default=None)
     createdDate = db.DateTimeField(default=datetime.now)
     updatedDate= db.DateTimeField(default=datetime.now)
     ownerId = db.IntField(required=True)

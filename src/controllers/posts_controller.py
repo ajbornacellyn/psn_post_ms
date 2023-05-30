@@ -49,7 +49,8 @@ def get_post(post_id):
     try:
         pipeline = getPostPipeline(post_id)
         post = Post.objects.aggregate(*pipeline)
-        response = json_util.dumps(post)
+        post = list(post)
+        response = json_util.dumps(post[0])
         return Response(response, mimetype='application/json')
     
     except DoesNotExist:
