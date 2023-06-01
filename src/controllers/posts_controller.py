@@ -50,6 +50,8 @@ def get_post(post_id):
         pipeline = getPostPipeline(post_id)
         post = Post.objects.aggregate(*pipeline)
         post = list(post)
+        if len(post) == 0:
+            return jsonify({'statusCode': 404,'message': 'post not found'}), 404
         response = json_util.dumps(post[0])
         return Response(response, mimetype='application/json')
     

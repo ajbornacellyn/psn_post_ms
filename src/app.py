@@ -10,8 +10,9 @@ from mongoengine import connect
 app = Flask(__name__)
 
 # connect to database
-MONGO_URI = os.getenv('mongodb+srv://jrojasce:jkvUIs1rFxeB4NHR@psn-post-db.izodfgc.mongodb.net/test')
+MONGO_URI = os.getenv('MONGO_URI')
 connect(host=MONGO_URI)
+
 
 app.register_blueprint(posts_bp)
 app.register_blueprint(contentElement_bp)
@@ -20,4 +21,4 @@ app.register_blueprint(report_bp)
 app.register_blueprint(Comment_bp)
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=os.getenv('PORT', 4200), debug=True)
+    app.run(host='0.0.0.0', port=os.getenv('PORT', 4100), debug=True)
